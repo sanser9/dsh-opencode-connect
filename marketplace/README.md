@@ -32,6 +32,17 @@ data/plugins/sanser9__dsh-opencode-connect.yml
 
 ## 到时怎么做
 
+### 一条命令（推荐）
+
+```bash
+GITHUB_TOKEN=ghp_xxx ./scripts/open-marketplace-pr.sh
+```
+
+脚本会自动：检查仓库年龄（未满 24 小时直接报出可提交时间）→ fork 上游 →
+建分支 → 写入条目 → 开 PR。全部走 GitHub REST API，不需要本地 git 凭据。
+
+### 或者手工
+
 1. Fork `awesome-dsh-plugin/awesome-dsh-plugin`
 2. 新建分支，添加 `data/plugins/sanser9__dsh-opencode-connect.yml`（内容见上）
 3. 开 PR，标题形如 `Add sanser9/dsh-opencode-connect`
