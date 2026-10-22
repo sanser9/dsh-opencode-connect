@@ -6,6 +6,8 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer } from 'node:http'
 
+import { hostIsLoopback, originIsLoopback } from './loopback.js'
+
 const REQUEST_BODY_LIMIT = 64 * 1024 * 1024
 
 function isJsonContentType(req) {
@@ -42,23 +44,6 @@ function readBody(req) {
     req.on('end', () => resolve(Buffer.concat(chunks)))
     req.on('error', reject)
   })
-}
-
-function hostIsLoopback(host) {
-  if (host === undefined || host.length === 0) return false
-  const name = host.split(':')[0]?.toLowerCase()
-  if (name === undefined) return false
-  return name === 'localhost' || name === '::1' || name === '[::1]' || name.startsWith('127.')
-}
-
-function originIsLoopback(origin) {
-  if (origin === undefined || origin.length === 0) return true
-  try {
-    const url = new URL(origin)
-    return hostIsLoopback(url.hostname)
-  } catch {
-    return false
-  }
 }
 
 /**

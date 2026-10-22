@@ -3,6 +3,10 @@
 <p align="center"><b>把 OpenCode 的免费模型接入 DeepSeek Harness —— 零配置、零费用、开箱即用。</b></p>
 
 <p align="center">
+  <a href="https://github.com/sanser9/dsh-opencode-connect/actions/workflows/ci.yml"><img src="https://github.com/sanser9/dsh-opencode-connect/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
+
+<p align="center">
   <a href="README.en.md">English</a> ·
   <a href="#安装">安装</a> ·
   <a href="#工作原理">工作原理</a> ·
@@ -144,6 +148,7 @@ git clone https://github.com/sanser9/dsh-opencode-connect.git
 cd dsh-opencode-connect
 npm install            # 只装 @earendil-works/pi-ai
 npm run build          # src/*.js -> dist/*.js（纯拷贝，无编译）
+npm test               # Node 内置 test runner，零额外依赖
 ```
 
 目录结构：
@@ -157,7 +162,10 @@ src/
   catalog.js          模型目录（实时 + 兜底名单）
   loopback.js         回环地址判定与端口绑定
 scripts/build.mjs     构建（src -> dist）
+tests/                Node 内置 test runner 测试（12 个用例）
 cordis.patch.yml      bundle 声明（llm-opencode 行）
+.github/workflows/    CI（Node 22.19 / 24 × Linux / macOS）
+marketplace/          Awesome DSH Plugin 收录草稿
 ```
 
 本地调试：把本仓库 `link:` 进某个 DSH profile 的 `dependencies`，重启 `dsh web`，日志里应出现：

@@ -3,6 +3,10 @@
 <p align="center"><b>Bring OpenCode's free models into DeepSeek Harness — zero config, zero cost, works out of the box.</b></p>
 
 <p align="center">
+  <a href="https://github.com/sanser9/dsh-opencode-connect/actions/workflows/ci.yml"><img src="https://github.com/sanser9/dsh-opencode-connect/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
+
+<p align="center">
   <a href="README.md">中文</a> ·
   <a href="#install">Install</a> ·
   <a href="#how-it-works">How it works</a> ·
@@ -135,6 +139,7 @@ git clone https://github.com/sanser9/dsh-opencode-connect.git
 cd dsh-opencode-connect
 npm install       # only @earendil-works/pi-ai
 npm run build     # src/*.js -> dist/*.js (plain copy, no transpilation)
+npm test          # Node's built-in test runner, no extra dependencies
 ```
 
 ```
@@ -146,7 +151,10 @@ src/
   catalog.js          model catalog (live + fallback roster)
   loopback.js         loopback detection and port binding
 scripts/build.mjs     build (src -> dist)
+tests/                Node built-in test runner suites (12 cases)
 cordis.patch.yml      bundle declaration (llm-opencode row)
+.github/workflows/    CI (Node 22.19 / 24 x Linux / macOS)
+marketplace/          Awesome DSH Plugin submission draft
 ```
 
 Local debugging: `link:` this repo into a DSH profile's `dependencies`, restart `dsh web`, and expect these log lines:
