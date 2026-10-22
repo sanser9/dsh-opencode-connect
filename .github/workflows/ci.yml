@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node: ['22.19.0', '24']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies
+        run: npm install --omit=dev --no-audit --no-fund
+
+      - name: Build dist/ from src/
+        run: npm run build
+
+      - name: Verify committed dist/ is in sync with src/
+        run: |
+          if [ -n "$(git status --porcelain dist/)" ]; then
+            echo "::error::dist/ is stale — run 'npm run build' and commit the result."
+            git --no-pager diff --stat dist/
+            exit 1
+          fi
+
+      - name: Run tests
+        run: node --test tests/*.test.mjs
+
+      - name: Verify bundle manifest
+        run: |
+          node -e '
+            const pkg = require("./package.json");
+            const assert = require("node:assert/strict");
+            assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml", "dsh.bundle.patch must point at cordis.patch.yml");
+            assert.ok(pkg.files.includes("dist"), "files must ship dist/");
+            for (const name of Object.keys(pkg.dependencies ?? {}))
+              assert.ok(!name.startsWith("@deepseek-ai/"), name + " must be a peerDependency");
+            console.log("manifest OK");
+          '
+
+      - name: Verify cordis.patch.yml parses and declares the plugin row
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const assert = require("node:assert/strict");
+            const yml = fs.readFileSync("cordis.patch.yml", "utf8");
+            assert.match(yml, /^\s*-\s*insert:/m, "patch must have an insert row");
+            assert.match(yml, /id:\s*llm-opencode/, "patch row id must be llm-opencode");
+            console.log("patch OK");
+          '
