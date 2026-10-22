@@ -1,0 +1,7 @@
+# Register the OpenCode free-model provider. The plugin spawns (or reuses)
+# a local `opencode serve` on 127.0.0.1:40961 and bridges it to the LLM
+# runtime through a pi-ai provider, mirroring dsh-workbuddy-connect.
+- insert:
+    - id: llm-opencode
+      name: dsh-opencode-connect
+      config: {}
