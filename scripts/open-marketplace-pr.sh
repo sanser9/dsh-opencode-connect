@@ -82,12 +82,23 @@ for i in $(seq 1 20); do
 done
 
 echo "==> 读取上游 main 的 HEAD"
-BASE_SHA=$(api GET "/repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/git/ref/heads/main" | json_get sha)
+# The ref endpoint nests the commit id under `object.sha`, not at the top level.
+BASE_SHA=$(api GET "/repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/git/ref/heads/main" \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('object') or {}).get('sha',''))")
 [ -n "$BASE_SHA" ] || { echo "✗ 无法读取上游 HEAD" >&2; exit 1; }
+echo "    base ${BASE_SHA:0:8}"
 
 echo "==> 创建分支 ${BRANCH}"
-api POST "/repos/${PLUGIN_OWNER}/${UPSTREAM_REPO}/git/refs" \
-  "{\"ref\":\"refs/heads/${BRANCH}\",\"sha\":\"${BASE_SHA}\"}" >/dev/null || true
+REF_RESP=$(api POST "/repos/${PLUGIN_OWNER}/${UPSTREAM_REPO}/git/refs" \
+  "{\"ref\":\"refs/heads/${BRANCH}\",\"sha\":\"${BASE_SHA}\"}")
+if echo "$REF_RESP" | grep -q '"ref"'; then
+  echo "    ✓ 分支已创建"
+elif echo "$REF_RESP" | grep -q 'Reference already exists'; then
+  echo "    · 分支已存在，复用"
+else
+  echo "    ✗ 建分支失败: $(echo "$REF_RESP" | head -c 300)" >&2
+  exit 1
+fi
 
 echo "==> 写入 ${ENTRY_PATH}"
 CONTENT_B64=$(base64 < "$ENTRY_SRC" | tr -d '\n')
@@ -101,7 +112,13 @@ print(json.dumps({
 }))
 PY
 )
-api PUT "/repos/${PLUGIN_OWNER}/${UPSTREAM_REPO}/contents/${ENTRY_PATH}" "$BODY" >/dev/null
+PUT_RESP=$(api PUT "/repos/${PLUGIN_OWNER}/${UPSTREAM_REPO}/contents/${ENTRY_PATH}" "$BODY")
+if echo "$PUT_RESP" | grep -q '"commit"'; then
+  echo "    ✓ 条目已写入"
+else
+  echo "    ✗ 写条目失败: $(echo "$PUT_RESP" | head -c 300)" >&2
+  exit 1
+fi
 
 echo "==> 开 PR"
 PR_BODY=$(cat <<'MD'
